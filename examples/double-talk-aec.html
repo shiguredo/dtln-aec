@@ -1,0 +1,178 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>DTLN-aec: エコーキャンセルデモ（ダブルトーク）</title>
+  </head>
+
+  <body>
+    <h1>DTLN-aec: エコーキャンセルデモ（ダブルトーク）</h1>
+    ダブルトーク（二人の話者が同時に話している）時のエコーキャンセルのデモです。<br /><br />
+
+    エコーキャンセルには <a href="https://github.com/breizhn/DTLN-aec">breizhn/DTLN-aec</a> （リアルタイムで動作する深層学習ベースのキャンセラ）を
+    JavaScript から利用可能にした <a href="https://github.com/shiguredo/dtln-aec">shiguredo/dtln-aec</a> を使っています。 <br />
+    ※
+    このデモは Chrome や Edge などの Chromium ベースのブラウザでのみ動作します <br />
+
+    <h2>使用手順</h2>
+    <ol>
+      <li>末尾の「録画開始」ボタンを押下すると、スピーカーから人間の音声が流れます（これがキャンセル対象となります）</li>
+      <li>同時にマイクに入力された音声が五秒間録音されます（エコーキャンセルあり・なしの両方）</li>
+      <li>「録音開始」ボタンの右側にある二つの「再生開始」ボタンを押すことで、エコーキャンセル有無での録音音声の再生が行えます</li>
+    </ol>
+    ※
+    このデモはイヤホンを外して行ってください
+
+    <h2>各種設定</h2>
+    <h3>ブラウザ設定 (getUserMedia)</h3>
+    <input type="checkbox" id="gum-aec">ブラウザの組み込みエコーキャンセルを有効にする<br />
+
+    <h3>DLTN-aec モデル</h3>
+    <select id="model-name" size="3">
+      <option value="dtln_aec_512">dtln_aec_512（大）</option>
+      <option value="dtln_aec_256">dtln_aec_256（中）</option>
+      <option value="dtln_aec_128" selected>dtln_aec_128（小）</option>
+    </select>
+
+    <h3>スピーカー音源（キャンセル対象）</h3>
+    <select id="audio-file" size="2">
+      <option value="ohayougozaimasu_03.wav" selected>挨拶</option>
+      <option value="rusuden_01.wav">留守電</option>
+    </select>
+    <br />
+    ※
+    音声ファイルには <a href="https://amitaro.net/">あみたろの声素材工房</a> 様の声素材を使用しています
+
+    <h2>操作</h2>
+    <input value="録音開始（5秒）" type="button" onClick="startRecording()">
+    <input value="再生開始（エコーキャンセル後）" type="button" onClick="playProcessedAudio()">
+    <input value="再生開始（オリジナルマイク入力）" type="button" onClick="playOriginalAudio()">
+
+    <br />
+    <audio id="audio" autoplay playsinline></audio>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js"> </script>
+    <script src="../dist/dtln_aec.js"></script>
+
+    <script>
+      let originalAudioDataList = [];
+      let processedAudioDataList = [];
+      let audioContext;
+      const recordingDuration = 5 * 1000 * 1000; // micro secs
+
+      function getUserMedia() {
+        const constraints = {audio: {
+          echoCancellation: document.getElementById('gum-aec').checked,
+          noiseSuppression: true,
+          autoGainControl: false,
+          channelCount: {exact: 1}
+        }};
+        return navigator.mediaDevices.getUserMedia(constraints);
+      }
+
+      function startRecording() {
+        originalAudioDataList = [];
+        processedAudioDataList = [];
+
+        getUserMedia().then(async (inputStream) => {
+          // モデルをロード
+          const modelName = document.getElementById("model-name").value
+          const dtlnAec = await Shiguredo.DtlnAec.loadModel("../dist/", { modelName });
+
+          // スピーカ音源を再生
+          audioContext = new AudioContext();
+          const outputAudio = new Audio(document.getElementById("audio-file").value);
+          outputAudio.loop = true;
+
+          const audioDestination = audioContext.createMediaStreamDestination();
+          audioDestination.channelCount = 1;
+          audioDestination.channelCountMode = "explicit";
+          audioDestination.channelInterpretation = "speakers";
+
+          const audioSource = audioContext.createMediaElementSource(outputAudio);
+          audioSource.connect(audioDestination);
+
+          const outputAudioTrack = audioDestination.stream.getAudioTracks()[0]
+          outputAudio.play();
+
+          const abortController = new AbortController();
+          const signal = abortController.signal;
+          const outputAudioGenerator = new MediaStreamTrackGenerator({ kind: "audio" });
+          const outputAudioProcessor = new MediaStreamTrackProcessor({ track: outputAudioTrack });
+          outputAudioProcessor.readable
+            .pipeThrough(
+              new TransformStream({
+                transform: (data, controller) => {
+                  dtlnAec.processOutputAudioData(data);
+                  controller.enqueue(data);
+                }
+              }),
+              { signal })
+            .pipeTo(outputAudioGenerator.writable)
+            .catch((e) => {
+              if (!signal.aborted) {
+                console.log("Output stream transform stopped:", e);
+              }
+            });
+
+
+          const audioElement = document.getElementById('audio');
+          audioElement.srcObject = new MediaStream([outputAudioGenerator]);
+
+
+          // 入力音声を録音
+          let duration = 0;
+          const inputAudioGenerator = new MediaStreamTrackGenerator({ kind: "audio" });
+          const inputAudioProcessor = new MediaStreamTrackProcessor({ track: inputStream.getAudioTracks()[0] });
+          inputAudioProcessor.readable
+            .pipeThrough(
+              new TransformStream({
+                transform: (data, controller) => {
+                  originalAudioDataList.push(data);
+                  for (const processedData of dtlnAec.processInputAudioData(data)) {
+                    processedAudioDataList.push(processedData);
+                  }
+                  duration += data.duration;
+                  if (duration > recordingDuration) {
+                    abortController.abort();
+                  }
+                }
+              }),
+              { signal })
+            .pipeTo(inputAudioGenerator.writable)
+            .catch((e) => {
+              if (!signal.aborted) {
+                console.log("Input stream transform stopped:", e);
+              }
+            });
+        });
+      }
+
+      function playProcessedAudio() {
+        playAudio(processedAudioDataList);
+      }
+
+      function playOriginalAudio() {
+        playAudio(originalAudioDataList);
+      }
+
+      function playAudio(audioDataList) {
+        const frames = audioDataList[0].numberOfFrames;
+        const buffer = audioContext.createBuffer(
+          1,
+          frames * audioDataList.length,
+          audioDataList[0].sampleRate
+        );
+        const tmpBuffer = new Float32Array(frames);
+        for (const [i, audioData] of audioDataList.entries()) {
+          audioData.copyTo(tmpBuffer, { planeIndex: 0 });
+          buffer.copyToChannel(tmpBuffer, 0, i * frames);
+        }
+        var source = audioContext.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioContext.destination);
+        source.start();
+      }
+
+    </script>
+  </body>
+</html>

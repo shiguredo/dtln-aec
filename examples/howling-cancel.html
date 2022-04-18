@@ -1,0 +1,103 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>DTLN-aec: エコーキャンセルデモ（ハウリング）</title>
+  </head>
+
+  <body>
+    <h1>DTLN-aec: エコーキャンセルデモ（ハウリング）</h1>
+    エコーキャンセルを使って、マイク入力を自分のスピーカーに出力した場合に発生するハウリングの抑制を行うデモです。<br /><br />
+
+    エコーキャンセルには <a href="https://github.com/breizhn/DTLN-aec">breizhn/DTLN-aec</a> （リアルタイムで動作する深層学習ベースのキャンセラ）を
+    JavaScript から利用可能にした <a href="https://github.com/shiguredo/dtln-aec">shiguredo/dtln-aec</a> を使っています。 <br />
+    ※
+    このデモは Chrome や Edge などの Chromium ベースのブラウザでのみ動作します <br />
+
+    <h2>使用手順</h2>
+    <ol>
+      <li>末尾の「開始」ボタンを押下すると、マイク入力が有効になります</li>
+      <li>マイクに話した音声が、エコーキャンセル処理が適用された上で、スピーカーに出力されます</li>
+      <li>「停止」ボタンを押下すると、マイク入力およびスピーカ出力が停止します</li>
+    </ol>
+    ※
+    このデモはイヤホンを外して行ってください<br />
+    <strong><span style="color:#F00">
+      ※
+      環境や条件によっては、エコーキャンセル処理適用後でも強いハウリングが発生する可能性があるため、
+      スピーカー音量には十分に注意し、即座に停止できるようにしておいてください
+    </span></strong>
+
+    <h2>各種設定</h2>
+    <h3>エコーキャンセルの有効化</h3>
+    <input type="checkbox" id="gum-aec">ブラウザの組み込みエコーキャンセルを有効にする<br />
+    <input type="checkbox" id="dtln-aec" checked="checked">DTLN-aec によるエコーキャンセルを有効にする（チェックを外す場合にはハウリングに注意してください）<br />
+
+    <h3>DLTN-aec モデル</h3>
+    <select id="model-name" size="3">
+      <option value="dtln_aec_512">dtln_aec_512（大）</option>
+      <option value="dtln_aec_256">dtln_aec_256（中）</option>
+      <option value="dtln_aec_128" selected>dtln_aec_128（小）</option>
+    </select>
+
+    <h2>操作</h2>
+    <input value="開始" type="button" onClick="startAudio()">
+    <input value="停止" type="button" onClick="stopAudio()">
+
+    <br />
+    <audio id="audio" autoplay playsinline></audio>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js"> </script>
+    <script src="../dist/dtln_aec.js"></script>
+
+    <script>
+      function getUserMedia() {
+        const constraints = {audio: {
+          echoCancellation: document.getElementById('gum-aec').checked,
+          noiseSuppression: true,
+          autoGainControl: false,
+          channelCount: {exact: 1}
+        }};
+        return navigator.mediaDevices.getUserMedia(constraints);
+      }
+
+      function stopAudio() {
+          const audioElement = document.getElementById('audio');
+          audioElement.pause();
+      }
+
+      function startAudio() {
+          getUserMedia().then(async (stream) => {
+              const audioElement = document.getElementById('audio');
+
+              if (!document.getElementById('dtln-aec').checked) {
+                  audioElement.srcObject = stream;
+                  return;
+              }
+
+              const modelName = document.getElementById("model-name").value
+              const dtlnAec = await Shiguredo.DtlnAec.loadModel("../dist/", { modelName });
+
+              const generator = new MediaStreamTrackGenerator({ kind: "audio" });
+              const processor = new MediaStreamTrackProcessor({ track: stream.getAudioTracks()[0] });
+              processor.readable
+                  .pipeThrough(
+                      new TransformStream({
+                          transform: (data, controller) => {
+                              for (const processedData of dtlnAec.processInputAudioData(data)) {
+                                  dtlnAec.processOutputAudioData(processedData);
+                                  controller.enqueue(processedData);
+                              }
+                              data.close();
+
+                          }
+                      }))
+                  .pipeTo(generator.writable)
+                  .catch((e) => {
+                      console.log("Input stream transform stopped:", e);
+                  });
+              audioElement.srcObject = new MediaStream([generator]);
+          });
+      }
+    </script>
+  </body>
+</html>
