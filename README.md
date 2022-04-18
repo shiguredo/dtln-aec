@@ -95,6 +95,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ```
 
+### 深層学習モデルやランタイムのライセンス
+
 `dist/` 以下に配置されている各種アセットファイルのライセンスについては、下記のリンク先を参照してください:
 - 学習済みモデル（.tflite）:  [breizhn/DTLN-aec/LICENSE](https://github.com/breizhn/DTLN-aec/blob/main/LICENSE)
 - モデルを動作させるランタイム（tfjs-lite の .js や .wasm）: [tensorflow/tfjs/LICENSE](https://github.com/tensorflow/tfjs)
+
+### 音声ファイルのライセンス
+
+デモページで使用している音声ファイルには [あみたろの声素材工房](https://amitaro.net/) 様の声素材を使用しています。
