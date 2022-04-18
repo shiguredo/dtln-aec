@@ -99,7 +99,7 @@ limitations under the License.
 
 `dist/` 以下に配置されている各種アセットファイルのライセンスについては、下記のリンク先を参照してください:
 - 学習済みモデル（.tflite）:  [breizhn/DTLN-aec/LICENSE](https://github.com/breizhn/DTLN-aec/blob/main/LICENSE)
-- モデルを動作させるランタイム（tfjs-lite の .js や .wasm）: [tensorflow/tfjs/LICENSE](https://github.com/tensorflow/tfjs)
+- モデルを動作させるランタイム（tfjs-lite の .js や .wasm）: [tensorflow/tfjs/LICENSE](https://github.com/tensorflow/tfjs/blob/master/LICENSE)
 
 ### 音声ファイルのライセンス
 
