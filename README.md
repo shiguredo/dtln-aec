@@ -3,8 +3,7 @@ dtln-aec
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-[breizhn/DTLN-aec](https://github.com/breizhn/DTLN-aec) という深層学習ベースのエコーキャンセラを
-JavaScript や TypeScript から利用するためのライブラリです。
+[breizhn/DTLN-aec](https://github.com/breizhn/DTLN-aec) という深層学習ベースのエコーキャンセラをブラウザで利用するためのライブラリです。
 
 ## About Shiguredo's open source software
 
@@ -18,13 +17,13 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 
 ## 使い方
 
-JavaScript の場合には以下のコードのようになります:
+基本的な使い方は以下のコードのようになります:
 ```javascript
-// モデルをロード
+// 1. モデルをロード
 const assetsPath = "path/to/dist/";
 const dtlnAec = new Shiguredo.DtlnAec.loadModel(assetsPath);
 
-// キャンセル対象の音声を含む出力トラックを処理
+// 2. キャンセル対象の音声を含む出力トラックを処理
 const outputAudioTrack = ...;
 const outputAudioGenerator = new MediaStreamTrackGenerator({ kind: "audio" });
 const outputAudioProcessor = new MediaStreamTrackProcessor({ track: outputAudioTrack });
@@ -44,7 +43,7 @@ outputAudioProcessor.readable
 // 処理後の出力音声ストリームを取得（内容は特に変わっていない）
 const outputAudioStream = new MediaStream([outputAudioGenerator]);
 
-// エコーキャンセルの適用対象となる入力音声を処理　
+// 3. エコーキャンセルの適用対象となる入力音声を処理　
 navigator.mediaDevices.getUserMedia({audio: true}).then((stream) => {
     const inputAudioGenerator = new MediaStreamTrackGenerator({ kind: "audio" });
     const inputAudioProcessor = new MediaStreamTrackProcessor({ track: stream.getAudioTracks()[0] });
