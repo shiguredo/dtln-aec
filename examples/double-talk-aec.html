@@ -79,7 +79,10 @@
           const dtlnAec = await Shiguredo.DtlnAec.loadModel("../dist/", { modelName });
 
           // スピーカ音源を再生
-          audioContext = new AudioContext();
+          //
+          // breizhn/DTLN-aec は入力として 16kHz を想定しているので、
+          // 常に 16kHz になるように sampleRate 引数を指定しておく
+          audioContext = new AudioContext({sampleRate: 16000});
           const outputAudio = new Audio(document.getElementById("audio-file").value);
           outputAudio.loop = true;
 
