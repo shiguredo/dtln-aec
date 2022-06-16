@@ -44,7 +44,7 @@
     "eslint": "^8.17.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
-    "prettier": "^2.7.0",
+    "prettier": "^2.7.1",
     "rollup": "^2.75.6",
     "rollup-plugin-copy": "^3.4.0",
     "serve": "^13.0.2",
