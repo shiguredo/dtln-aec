@@ -39,7 +39,7 @@
     "@tensorflow/tfjs": "^3.19.0",
     "@tensorflow/tfjs-core": "3.11.0",
     "@tensorflow/tfjs-tflite": "0.0.1-alpha.8",
-    "@typescript-eslint/eslint-plugin": "^5.30.7",
+    "@typescript-eslint/eslint-plugin": "^5.31.0",
     "@typescript-eslint/parser": "^5.31.0",
     "eslint": "^8.20.0",
     "eslint-config-prettier": "^8.3.0",
