@@ -35,7 +35,7 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "^22.0.2",
     "@rollup/plugin-node-resolve": "^13.3.0",
-    "@rollup/plugin-typescript": "^8.3.4",
+    "@rollup/plugin-typescript": "^8.4.0",
     "@tensorflow/tfjs": "^3.19.0",
     "@tensorflow/tfjs-core": "3.11.0",
     "@tensorflow/tfjs-tflite": "0.0.1-alpha.8",
@@ -48,6 +48,6 @@
     "rollup": "^2.78.1",
     "rollup-plugin-copy": "^3.4.0",
     "serve": "^14.0.1",
-    "typescript": "^4.7.4"
+    "typescript": "^4.8.2"
   }
 }
