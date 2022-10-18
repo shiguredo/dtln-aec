@@ -4,6 +4,7 @@
     "config:base"
   ],
   "dependencyDashboard": false,
+  "ignoreDeps": ["@tensorflow/tfjs-core"],
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
