@@ -33,9 +33,9 @@
     "@types/dom-mediacapture-transform": "^0.1.3"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "23.0.1",
-    "@rollup/plugin-node-resolve": "15.0.0",
-    "@rollup/plugin-typescript": "9.0.1",
+    "@rollup/plugin-commonjs": "23.0.2",
+    "@rollup/plugin-node-resolve": "15.0.1",
+    "@rollup/plugin-typescript": "9.0.2",
     "@tensorflow/tfjs": "3.21.0",
     "@tensorflow/tfjs-core": "3.20.0",
     "@tensorflow/tfjs-tflite": "0.0.1-alpha.9",
